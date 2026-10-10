@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
+import os
 
 from . import models, database
 
@@ -18,6 +21,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Root route serving frontend index.html
+@app.get("/")
+def serve_home():
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    frontend_index = os.path.join(base_dir, "frontend", "index.html")
+    if os.path.exists(frontend_index):
+        return FileResponse(frontend_index)
+    return {"message": "Task Manager API is running. Access frontend files directly."}
+
+# Mount static frontend directory (style.css, app.js, etc.)
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+frontend_dir = os.path.join(base_dir, "frontend")
+if os.path.isdir(frontend_dir):
+    app.mount("/frontend", StaticFiles(directory=frontend_dir), name="frontend")
+    app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
 class TaskCreate(BaseModel):
     title: str
@@ -47,7 +66,7 @@ class TaskResponse(BaseModel):
     category: Optional[str] = "Personal"
     recurrence: Optional[str] = "none"
     subtasks: Optional[str] = "[]"
-
+    
     class Config:
         from_attributes = True
 
@@ -75,6 +94,7 @@ def update_task(task_id: int, task_update: TaskUpdate, db: Session = Depends(dat
     task = db.query(models.Task).filter(models.Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    
     if task_update.title is not None:
         task.title = task_update.title
     if task_update.description is not None:
@@ -93,6 +113,7 @@ def update_task(task_id: int, task_update: TaskUpdate, db: Session = Depends(dat
         task.recurrence = task_update.recurrence
     if task_update.subtasks is not None:
         task.subtasks = task_update.subtasks
+        
     db.commit()
     db.refresh(task)
     return task
