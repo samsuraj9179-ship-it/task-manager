@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/tasks/(.*)",
+      "destination": "/backend/main.py"
+    },
+    {
+      "source": "/tasks",
+      "destination": "/backend/main.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/$1"
+    }
+  ]
+}
