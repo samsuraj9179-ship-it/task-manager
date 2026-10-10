@@ -1,6 +1,4 @@
-const API_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:'
-    ? 'http://127.0.0.1:8000'
-    : '';
+const API_URL = "http://127.0.0.1:8000";
 let allTasks = [];
 let countdownInterval = null;
 let reminderTimeouts = [];
@@ -269,9 +267,9 @@ function createTaskCard(task) {
             ${task.description ? `<p class="task-desc">${escapeHtml(task.description)}</p>` : ''}
             ${subtasksHTML}
             <div class="task-actions">
-                <button class="btn-complete" onclick="toggleComplete(${task.id}, ${task.completed})">
-                    ${task.completed ? '↩ Reopen' : '✓ Complete'}
-                </button>
+                <input type="checkbox" class="checkbox-custom" title="Toggle Completion"
+                    ${task.completed ? "checked" : ""} 
+                    onchange="toggleComplete(${task.id}, ${task.completed})">
                 <button class="btn-edit" onclick="openEditModal(${task.id})">✏️ Edit</button>
                 <button class="btn-delete" onclick="deleteTask(${task.id})">🗑 Delete</button>
             </div>
