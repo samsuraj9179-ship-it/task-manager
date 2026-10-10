@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://task-manager-wrld.onrender.com";
 let allTasks = [];
 let countdownInterval = null;
 let reminderTimeouts = [];
