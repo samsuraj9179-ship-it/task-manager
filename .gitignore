@@ -1,0 +1,20 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Local SQLite Database
+*.db
+tasks.db
+
+# Virtual Environments
+venv/
+env/
+.env
+.venv/
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+.DS_Store

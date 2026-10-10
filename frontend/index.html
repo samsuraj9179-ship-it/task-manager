@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="task-anim-bg">
+        <div class="glow-orb"></div>
+    </div>
+
+    <!-- Notification permission bar -->
+    <div class="notification-bar" id="notificationBar" style="display:none;">
+        <span>🔔 Enable browser notifications to get reminder alerts.</span>
+        <button onclick="enableNotifications()">Enable Notifications</button>
+    </div>
+
+    <div class="container">
+        <!-- Header with action bar -->
+        <div class="app-header">
+            <div>
+                <h1>✨ Task Manager</h1>
+                <div class="keyboard-tip">Tip: Press <kbd>/</kbd> to create a task</div>
+            </div>
+            <div class="header-actions">
+                <select id="soundPicker" class="glass-select sound-picker" onchange="changeSoundTheme(this.value)" title="Choose Alarm Sound">
+                    <option value="chime">🔔 Bell Chime</option>
+                    <option value="beep">📟 Digital Beep</option>
+                    <option value="marimba">🪵 Marimba</option>
+                    <option value="siren">🚨 Siren Alert</option>
+                </select>
+                <button onclick="testAlarmSound()" class="btn-action-small" title="Click to test alarm sound">🔊 Test Sound</button>
+                <button onclick="exportTasks()" class="btn-action-small" title="Export tasks to JSON">💾 Export</button>
+                <label class="btn-action-small import-label" title="Import tasks from JSON">
+                    📥 Import
+                    <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importTasks(event)">
+                </label>
+            </div>
+        </div>
+
+        <!-- Productivity & Progress Stats Card -->
+        <div class="glass-card stats-card" id="statsCard">
+            <div class="stats-header">
+                <span class="stats-title">📊 Daily Progress</span>
+                <span class="stats-numbers" id="statsNumbers">0 / 0 Completed (0%)</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+            </div>
+            <div class="stats-summary" id="statsSummary">
+                <span id="statPending">⏳ 0 Pending</span>
+                <span id="statCompleted">✅ 0 Completed</span>
+                <span id="statUrgent">🔴 0 Urgent</span>
+            </div>
+        </div>
+
+        <!-- Add Task Card -->
+        <div class="glass-card input-section">
+            <input type="text" id="taskTitle" placeholder="Task title... (press '/' anytime)" autocomplete="off">
+            <textarea id="taskDesc" rows="2" placeholder="Description (optional)..."></textarea>
+            
+            <div class="meta-select-grid">
+                <!-- Priority -->
+                <div class="meta-field">
+                    <span class="meta-label">Priority</span>
+                    <div class="priority-options">
+                        <label class="priority-radio urgent">
+                            <input type="radio" name="taskPriority" value="Urgent">
+                            <span>🔴 Urgent</span>
+                        </label>
+                        <label class="priority-radio medium">
+                            <input type="radio" name="taskPriority" value="Medium" checked>
+                            <span>🟡 Med</span>
+                        </label>
+                        <label class="priority-radio low">
+                            <input type="radio" name="taskPriority" value="Low">
+                            <span>🟢 Low</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Category -->
+                <div class="meta-field">
+                    <span class="meta-label">Category</span>
+                    <select id="taskCategory" class="glass-select meta-select">
+                        <option value="Personal">🏠 Personal</option>
+                        <option value="Work">💼 Work</option>
+                        <option value="Study">📚 Study</option>
+                        <option value="Shopping">🛒 Shopping</option>
+                        <option value="Health">💪 Health</option>
+                    </select>
+                </div>
+
+                <!-- Recurrence -->
+                <div class="meta-field">
+                    <span class="meta-label">Recurrence</span>
+                    <select id="taskRecurrence" class="glass-select meta-select">
+                        <option value="none">One-time</option>
+                        <option value="daily">🔁 Daily</option>
+                        <option value="weekly">📅 Weekly</option>
+                        <option value="weekdays">💼 Weekdays</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Subtasks checklist input -->
+            <div class="subtask-builder">
+                <span class="meta-label">Subtasks / Checklist (optional)</span>
+                <div class="subtask-input-row">
+                    <input type="text" id="subtaskDraftInput" placeholder="Add a checklist item (e.g. Milk, Eggs) and press Enter..." onkeydown="handleSubtaskInputKey(event)">
+                    <button type="button" class="btn-subtask-add" onclick="addSubtaskDraft()">+ Add</button>
+                </div>
+                <div class="subtask-draft-list" id="subtaskDraftList"></div>
+            </div>
+
+            <button id="addBtn" onclick="addTask()">+ Add Task</button>
+        </div>
+
+        <!-- Task List Card -->
+        <div class="glass-card list-section">
+            <div class="list-header">
+                <h2>Your Tasks</h2>
+                <div class="list-header-right">
+                    <button class="btn-sweep" onclick="clearCompletedTasks()" title="Delete all completed tasks">🧹 Clear Done</button>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="🔍 Search tasks..." oninput="handleFilterChange()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="filter-pills">
+                <button class="filter-pill active" data-filter="all" onclick="setFilter('all')">All</button>
+                <button class="filter-pill" data-filter="active" onclick="setFilter('active')">Pending</button>
+                <button class="filter-pill" data-filter="completed" onclick="setFilter('completed')">Done</button>
+                <span class="filter-divider"></span>
+                <button class="filter-pill" data-filter="urgent" onclick="setFilter('urgent')">🔴 Urgent</button>
+                <button class="filter-pill" data-filter="medium" onclick="setFilter('medium')">🟡 Medium</button>
+                <button class="filter-pill" data-filter="low" onclick="setFilter('low')">🟢 Low</button>
+                <span class="filter-divider"></span>
+                <button class="filter-pill" data-filter="cat-work" onclick="setFilter('cat-work')">💼 Work</button>
+                <button class="filter-pill" data-filter="cat-personal" onclick="setFilter('cat-personal')">🏠 Personal</button>
+                <button class="filter-pill" data-filter="cat-study" onclick="setFilter('cat-study')">📚 Study</button>
+            </div>
+
+            <div id="taskList"></div>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div id="editModal" class="modal-overlay" style="display: none;">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3>✏️ Edit Task</h3>
+                <button class="btn-close-modal" onclick="closeEditModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editTaskId">
+                <label class="meta-label">Title</label>
+                <input type="text" id="editTaskTitle">
+                
+                <label class="meta-label">Description</label>
+                <textarea id="editTaskDesc" rows="2"></textarea>
+                
+                <div class="meta-select-grid" style="margin-top: 10px;">
+                    <div class="meta-field">
+                        <span class="meta-label">Priority</span>
+                        <select id="editTaskPriority" class="glass-select meta-select">
+                            <option value="Urgent">🔴 Urgent</option>
+                            <option value="Medium">🟡 Medium</option>
+                            <option value="Low">🟢 Low</option>
+                        </select>
+                    </div>
+                    <div class="meta-field">
+                        <span class="meta-label">Category</span>
+                        <select id="editTaskCategory" class="glass-select meta-select">
+                            <option value="Personal">🏠 Personal</option>
+                            <option value="Work">💼 Work</option>
+                            <option value="Study">📚 Study</option>
+                            <option value="Shopping">🛒 Shopping</option>
+                            <option value="Health">💪 Health</option>
+                        </select>
+                    </div>
+                    <div class="meta-field">
+                        <span class="meta-label">Recurrence</span>
+                        <select id="editTaskRecurrence" class="glass-select meta-select">
+                            <option value="none">One-time</option>
+                            <option value="daily">🔁 Daily</option>
+                            <option value="weekly">📅 Weekly</option>
+                            <option value="weekdays">💼 Weekdays</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-save" onclick="saveTaskEdit()">💾 Save Changes</button>
+                    <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
